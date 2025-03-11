@@ -4,15 +4,26 @@ export const CLIENT_ID = "e4774b450b194ba5aa0c0ccdbb5e8ae9";
 const CLIENT_SECRET = "bfe8dd9f4623446f8a5e35643b7dfb71";
 export const REDIRECT_URI = "http://localhost:3000/"; // Remplace avec l'URL de redirection enregistrée
 const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
-
+export const TOKEN_MISTRALAI = 'zdFjVoUKFIdZ8rjyVVZ0sjqrMIfMqbPc';
 // Stockage des tokens en mémoire
 let accessToken = null;
 let refreshToken = null;
 let tokenExpiration = null;
-let authCode = null;
-export const SPOTIFY_AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(
-    "playlist-modify-public playlist-modify-private playlist-read-private playlist-read-collaborative user-read-private user-library-read user-library-modify"
-)}`;
+const SCOPES = [
+    "playlist-modify-public",
+    "playlist-modify-private",
+    "playlist-read-private",
+    "playlist-read-collaborative",
+    "user-read-private",
+    "user-library-read",
+    "user-library-modify",
+    "user-read-currently-playing", 
+    "user-read-playback-state",
+    "user-modify-playback-state" 
+
+].join(" "); // 🔹 Transforme le tableau en une chaîne de scopes séparés par des espaces
+
+export const SPOTIFY_AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}`;
 // 🟢 Fonction pour récupérer un token via le code d'autorisation
 export const getAccessToken = async (authorizationCode) => {
     try {

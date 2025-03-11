@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getAccessToken, getValidAccessToken } from './auth'; // Importer les fonctions d'authentification
+import { getAccessToken, getValidAccessToken, TOKEN_MISTRALAI } from './auth'; // Importer les fonctions d'authentification
 import 'bootstrap/dist/css/bootstrap.min.css';
-
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 
 function AI() {
@@ -40,12 +39,12 @@ function AI() {
     const fetchAccessToken = async () => {
         try {
             let token = localStorage.getItem("spotify_access_token"); // ✅ Récupération du token stocké
-    
+
             if (!token) {
                 console.log("🔄 Aucun token trouvé, tentative de récupération...");
                 token = await getValidAccessToken(); // Récupérer un token valide si localStorage est vide
             }
-    
+
             if (token) {
                 setAccessToken(token);
                 console.log("✅ Access Token récupéré et utilisé :", token);
@@ -69,7 +68,7 @@ function AI() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer zdFjVoUKFIdZ8rjyVVZ0sjqrMIfMqbPc`
+                    'Authorization': `Bearer ${TOKEN_MISTRALAI}`
                 },
                 body: JSON.stringify({
                     model: "mistral-medium",
@@ -173,17 +172,125 @@ function AI() {
         }
     };
 
+
+    // deuxiéme fonctionnalité ########
+    // 🆕 Nouvelle section pour recommander des musiques similaires à la musique en cours d'écoute
+
+    const [currentTrack, setCurrentTrack] = useState(null);
+    const [recommendations, setRecommendations] = useState([]);
+
+    // 🔹 Récupérer la musique en cours d'écoute
+    const getCurrentPlayingTrack = async () => {
+        if (!accessToken) {
+            console.warn("⚠️ Aucun token d'accès disponible.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${SPOTIFY_API_BASE_URL}/me/player/currently-playing`, {
+                headers: { "Authorization": `Bearer ${accessToken}` }
+            });
+
+            if (response.status === 204) {
+                console.log("🎵 Aucun titre en cours de lecture.");
+                return;
+            }
+
+            const data = await response.json();
+
+            if (data && data.item) {
+                const trackInfo = {
+                    title: data.item.name,
+                    artist: data.item.artists.map(artist => artist.name).join(", "),
+                    id: data.item.id
+                };
+                setCurrentTrack(trackInfo);
+                console.log("🎶 Musique en cours de lecture :", trackInfo);
+            }
+        } catch (error) {
+            console.error("❌ Erreur lors de la récupération de la musique en cours :", error);
+        }
+    };
+
+    // 🔹 Demander des recommandations similaires à Mistral AI
+    const getRecommendationsFromMistral = async () => {
+        if (!currentTrack) {
+            console.warn("⚠️ Aucun titre en cours d'écoute.");
+            return;
+        }
+
+        try {
+            console.log(`🔍 Demande de recommandations pour "${currentTrack.title}"`);
+
+            const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${TOKEN_MISTRALAI}`
+                },
+                body: JSON.stringify({
+                    model: "mistral-medium",
+                    messages: [{
+                        role: "user",
+                        content: `Propose-moi 5 morceaux similaires à "${currentTrack.title}" de ${currentTrack.artist}. sous forme de liste sans aucune phrases`
+                    }],
+                    max_tokens: 150
+                })
+            });
+
+            const data = await response.json();
+            const rawTracks = data.choices[0]?.message?.content.split('\n') || [];
+            const tracks = rawTracks.map(track => track.trim()).filter(track => track.length > 0);
+
+            console.log("✅ Recommandations obtenues :", tracks);
+            setRecommendations(tracks);
+        } catch (error) {
+            console.error("❌ Erreur lors de la récupération des recommandations :", error);
+        }
+    };
+
+    // 🔹 Ajouter les recommandations à la suite de la musique en cours de lecture
+    const addRecommendationsToQueue = async () => {
+        if (!accessToken || recommendations.length === 0) {
+            console.warn("⚠️ Aucun token d'accès ou aucune recommandation disponible.");
+            return;
+        }
+
+        try {
+            console.log("🎵 Ajout des recommandations à la file d'attente...");
+
+            for (const track of recommendations) {
+                const trackURI = await searchSpotifyTrack(track);
+                if (trackURI) {
+                    await fetch(`${SPOTIFY_API_BASE_URL}/me/player/queue?uri=${trackURI}`, {
+                        method: 'POST',
+                        headers: {
+                            "Authorization": `Bearer ${accessToken}`
+                        }
+                    });
+                    console.log(`✅ Ajouté à la file d'attente : ${track}`);
+                } else {
+                    console.warn(`⚠️ Impossible de trouver la musique "${track}" sur Spotify.`);
+                }
+            }
+
+            console.log("✅ Toutes les recommandations ont été ajoutées à la file d'attente !");
+        } catch (error) {
+            console.error("❌ Erreur lors de l'ajout des recommandations à la file d'attente :", error);
+        }
+    };
+
     return (
         <div className="container text-light py-5" style={{ backgroundColor: "#1e1e1e", minHeight: "100vh" }}>
             <h2 className="text-center">🤖 AI Music Generator (Mistral AI)</h2>
             <p className="text-center">Entrez un thème et laissez Mistral AI générer une playlist Spotify 🎶</p>
 
             <div className="d-flex justify-content-center">
-                <input 
-                    type="text" 
-                    className="form-control w-50" 
-                    placeholder="Ex: Soirée Chill, Workout, Années 80..." 
-                    value={userPrompt} 
+                <input
+                    type="text"
+                    className="form-control w-50"
+                    placeholder="Ex: Soirée Chill, Workout, Années 80..."
+                    value={userPrompt}
                     onChange={(e) => setUserPrompt(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && generatePlaylist()}
                 />
@@ -197,6 +304,48 @@ function AI() {
                     </a>
                 </div>
             )}
+
+
+
+            <div className="mt-5 p-4 bg-dark text-light rounded">
+                <h3 className="text-center">🎵 Recommandations Basées sur la Musique en Cours</h3>
+
+                <div className="text-center mb-3">
+                    <button className="btn btn-primary me-2" onClick={getCurrentPlayingTrack}>
+                        🎧 Vérifier la musique en cours
+                    </button>
+                    {currentTrack && (
+                        <span className="fs-5 ms-2">🎶 Actuellement : <strong>{currentTrack.title}</strong> - {currentTrack.artist}</span>
+                    )}
+                </div>
+
+                {currentTrack && (
+                    <div className="text-center">
+                        <button className="btn btn-info me-2" onClick={getRecommendationsFromMistral}>
+                            🔍 Obtenir des recommandations
+                        </button>
+                    </div>
+                )}
+
+                {recommendations.length > 0 && (
+                    <div className="mt-3">
+                        <h5 className="text-center">🎼 Recommandations proposées :</h5>
+                        <ul className="list-group">
+                            {recommendations.map((track, index) => (
+                                <li key={index} className="list-group-item bg-dark text-light">
+                                    {track}
+                                </li>
+                            ))}
+                        </ul>
+
+                        <div className="text-center mt-3">
+                            <button className="btn btn-warning" onClick={addRecommendationsToQueue}>
+                                🎶 Ajouter à la suite de lecture
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

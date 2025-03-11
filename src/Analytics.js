@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getValidAccessToken } from './auth';
+import { getValidAccessToken, TOKEN_MISTRALAI } from './auth';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './Analytics.css';
 
@@ -97,7 +97,7 @@ function Analytics() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer zdFjVoUKFIdZ8rjyVVZ0sjqrMIfMqbPc`
+          "Authorization": `Bearer ${TOKEN_MISTRALAI}`
         },
         body: JSON.stringify({
           model: "mistral-large-latest",
@@ -210,7 +210,7 @@ function Analytics() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer zdFjVoUKFIdZ8rjyVVZ0sjqrMIfMqbPc`
+          "Authorization": `Bearer ${TOKEN_MISTRALAI}`
         },
         body: JSON.stringify({
           model: "mistral-medium",
