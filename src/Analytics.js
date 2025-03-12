@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { getValidAccessToken, TOKEN_MISTRALAI } from './auth';
+import { getValidAccessToken, TOKEN_MISTRALAI, SPOTIFY_API_BASE_URL } from './auth';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './Analytics.css';
 
-const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 const DELAY = 200; // ⏳ Pause entre requêtes pour éviter la limite API
 
 function Analytics() {
@@ -264,8 +263,8 @@ function Analytics() {
     }
   };
   return (
-    <div className="container text-light py-5" style={{ backgroundColor: "#1e1e1e", minHeight: "100vh" }}>
-      <h2 className="text-center mb-4">📊 Tableau de bord Spotify</h2>
+    <div className="container-fluid bg-dark text-light min-vh-100 py-5">
+      <h2 className="text-center fw-bold fs-4">📊 Tableau de bord Spotify</h2>
 
       {loading ? (
         <div className="text-center">
@@ -304,7 +303,7 @@ function Analytics() {
           <div className="col-md-12">
             <div className="card bg-dark text-white p-4">
               <h4 className="text-warning text-center">🎵 Analyse musicale par Mistral AI</h4>
-              <p className="fs-5 text-light" style={{ whiteSpace: "pre-line" }}>
+              <p className="fs-5 text-light">
                 {mistralAnalysis || "Analyse en attente..."}
               </p>
             </div>
@@ -316,7 +315,7 @@ function Analytics() {
           <div className="card bg-dark text-white p-4">
             <h4 className="text-info text-center">🎶 Recommandations musicales</h4>
             {recommendedTracks.length > 0 ? (
-              <ul className="list-group list-group-flush">
+              <ul className="list-group">
                 {recommendedTracks.map((track, index) => (
                   <li key={index} className="list-group-item bg-dark text-light">
                     <strong>{track.title}</strong> - {track.artist}

@@ -10,13 +10,13 @@ const handleLogin = () => {
 
 function Header() {
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-            <Link to="/" className="navbar-brand">
-                <img src="./mistralAILogo.png" 
-                     alt="Mistral AI Logo" 
+        <nav className="navbar navbar-expand-lg" style={{ background: "linear-gradient(to bottom, #121212, #181818)" }}>
+            <Link to="/" className="navbar-brand" style={{ color: "#FFFFFF" }}>
+                <img src="./spotifyLogo.png" 
+                     alt="Spotify Logo" 
                      height="40"
                      className="me-2"/>
-                Mistral AI Music
+                Spotif'AI
             </Link>
             
             <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -26,16 +26,16 @@ function Header() {
             <div className="collapse navbar-collapse" id="navbarNav">
                 <ul className="navbar-nav ms-auto">
                     <li className="nav-item">
-                        <Link to="/" className="nav-link">🏠 Accueil</Link>
+                    <Link to="/" className="nav-link text-spotify-green" style={{ color: "#FFFFFF", fontWeight: "bold", fontSize: "18px" }} onMouseOver={e => e.currentTarget.style.opacity = 0.8} onMouseOut={e => e.currentTarget.style.opacity = 1}>🏠 Accueil</Link>
                     </li>
                     <li className="nav-item">
-                        <Link to="/analytics" className="nav-link">📊 Analytics</Link>
+                    <Link to="/analytics" className="nav-link text-spotify-green" style={{ color: "#FFFFFF", fontWeight: "bold", fontSize: "18px" }} onMouseOver={e => e.currentTarget.style.opacity = 0.8} onMouseOut={e => e.currentTarget.style.opacity = 1}>📊 Analytics</Link>
                     </li>
                     <li className="nav-item">
-                        <Link to="/ai" className="nav-link">🤖 AI</Link>
+                    <Link to="/ai" className="nav-link text-spotify-green" style={{ color: "#FFFFFF", fontWeight: "bold", fontSize: "18px" }} onMouseOver={e => e.currentTarget.style.opacity = 0.8} onMouseOut={e => e.currentTarget.style.opacity = 1}>🤖 AI</Link>
                     </li>
                     <li className="nav-item">
-                        <button className="btn btn-success ms-3" onClick={handleLogin}>🎵 Se connecter</button>
+                    <button className="btn" style={{ backgroundColor: "#1DB954", borderRadius: "8px" }} onMouseOver={e => e.currentTarget.style.opacity = 0.8} onMouseOut={e => e.currentTarget.style.opacity = 1} onClick={handleLogin}>🎵 Se connecter</button>
                     </li>
                 </ul>
             </div>

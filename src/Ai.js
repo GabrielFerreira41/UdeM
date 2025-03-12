@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getAccessToken, getValidAccessToken, TOKEN_MISTRALAI } from './auth'; // Importer les fonctions d'authentification
+import { getAccessToken, getValidAccessToken, TOKEN_MISTRALAI, SPOTIFY_API_BASE_URL } from './auth'; // Importer les fonctions d'authentification
 import 'bootstrap/dist/css/bootstrap.min.css';
-const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 
 function AI() {
     const [userPrompt, setUserPrompt] = useState('');
@@ -281,70 +280,70 @@ function AI() {
     };
 
     return (
-        <div className="container text-light py-5" style={{ backgroundColor: "#1e1e1e", minHeight: "100vh" }}>
-            <h2 className="text-center">🤖 AI Music Generator (Mistral AI)</h2>
-            <p className="text-center">Entrez un thème et laissez Mistral AI générer une playlist Spotify 🎶</p>
+        <div className="container-fluid min-vh-100 bg-dark" >
+            <div className="container py-4">
+                <h2 className="text-center text-spotify-green" style={{ color: "#FFFFFF" }}>🤖 AI Music Generator (Mistral AI)</h2>
+                <p className="text-center" style={{ color: "#FFFFFF" }}>Entrez un thème et laissez Mistral AI générer une playlist Spotify 🎶</p>
 
-            <div className="d-flex justify-content-center">
-                <input
-                    type="text"
-                    className="form-control w-50"
-                    placeholder="Ex: Soirée Chill, Workout, Années 80..."
-                    value={userPrompt}
-                    onChange={(e) => setUserPrompt(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && generatePlaylist()}
-                />
-                <button className="btn btn-success ms-2" onClick={generatePlaylist}>Générer 🎵</button>
-            </div>
-
-            {playlistURL && (
-                <div className="text-center mt-4">
-                    <a href={playlistURL} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-                        🎵 Voir la playlist sur Spotify
-                    </a>
-                </div>
-            )}
-
-
-
-            <div className="mt-5 p-4 bg-dark text-light rounded">
-                <h3 className="text-center">🎵 Recommandations Basées sur la Musique en Cours</h3>
-
-                <div className="text-center mb-3">
-                    <button className="btn btn-primary me-2" onClick={getCurrentPlayingTrack}>
-                        🎧 Vérifier la musique en cours
-                    </button>
-                    {currentTrack && (
-                        <span className="fs-5 ms-2">🎶 Actuellement : <strong>{currentTrack.title}</strong> - {currentTrack.artist}</span>
-                    )}
+                <div className="d-flex justify-content-center">
+                    <input
+                        type="text"
+                        className="form-control w-50"
+                        placeholder="Ex: Soirée Chill, Workout, Années 80..."
+                        value={userPrompt}
+                        onChange={(e) => setUserPrompt(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && generatePlaylist()}
+                    />
+                    <button className="btn btn-outline-success ms-2 text-spotify-green" onClick={generatePlaylist}>Générer 🎵</button>
                 </div>
 
-                {currentTrack && (
-                    <div className="text-center">
-                        <button className="btn btn-info me-2" onClick={getRecommendationsFromMistral}>
-                            🔍 Obtenir des recommandations
-                        </button>
+                {playlistURL && (
+                    <div className="text-center mt-4">
+                        <a href={playlistURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-success text-spotify-green">
+                            🎵 Voir la playlist sur Spotify
+                        </a>
                     </div>
                 )}
 
-                {recommendations.length > 0 && (
-                    <div className="mt-3">
-                        <h5 className="text-center">🎼 Recommandations proposées :</h5>
-                        <ul className="list-group">
-                            {recommendations.map((track, index) => (
-                                <li key={index} className="list-group-item bg-dark text-light">
-                                    {track}
-                                </li>
-                            ))}
-                        </ul>
+                <div className="mt-5 p-4" style={{ backgroundColor: "#282828", borderRadius: "8px", color: "#FFFFFF" }}>
+                    <h3 className="text-center text-spotify-green">🎵 Recommandations Basées sur la Musique en Cours</h3>
 
-                        <div className="text-center mt-3">
-                            <button className="btn btn-warning" onClick={addRecommendationsToQueue}>
-                                🎶 Ajouter à la suite de lecture
+                    <div className="text-center mb-3">
+                        <button className="btn btn-outline-success me-2 text-spotify-green" onClick={getCurrentPlayingTrack}>
+                            🎧 Vérifier la musique en cours
+                        </button>
+                        {currentTrack && (
+                            <span className="fs-5 ms-2">🎶 Actuellement : <strong>{currentTrack.title}</strong> - {currentTrack.artist}</span>
+                        )}
+                    </div>
+
+                    {currentTrack && (
+                        <div className="text-center">
+                            <button className="btn btn-outline-success me-2 text-spotify-green" onClick={getRecommendationsFromMistral}>
+                                🔍 Obtenir des recommandations
                             </button>
                         </div>
-                    </div>
-                )}
+                    )}
+
+                    {recommendations.length > 0 && (
+                        <div className="mt-3">
+                            <h5 className="text-center text-spotify-green">🎼 Recommandations proposées :</h5>
+                            <ul className="list-group">
+                                {recommendations.map((track, index) => (
+                                    <li key={index} className="list-group-item bg-dark text-light border-light" style={{ backgroundColor: "#282828", borderRadius: "8px", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                                        {track}
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <div className="text-center mt-3">
+                                <button className="btn btn-outline-success text-spotify-green" onClick={addRecommendationsToQueue}>
+                                    🎶 Ajouter à la suite de lecture
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

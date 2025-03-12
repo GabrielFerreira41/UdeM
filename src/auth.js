@@ -5,6 +5,10 @@ const CLIENT_SECRET = "bfe8dd9f4623446f8a5e35643b7dfb71";
 export const REDIRECT_URI = "http://localhost:3000/"; // Remplace avec l'URL de redirection enregistrée
 const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
 export const TOKEN_MISTRALAI = 'zdFjVoUKFIdZ8rjyVVZ0sjqrMIfMqbPc';
+export const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
+
+
+
 // Stockage des tokens en mémoire
 let accessToken = null;
 let refreshToken = null;
