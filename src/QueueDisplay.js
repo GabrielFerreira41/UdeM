@@ -104,7 +104,7 @@ const QueueDisplay = () => {
     };
 
     return (
-        <div className="mt-3">
+    <div className="mt-3 h-50 overflow-auto">
             {loading ? (
                 <p className="text-center text-muted">Chargement...</p>
             ) : (

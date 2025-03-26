@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { getAccessToken, getValidAccessToken,SPOTIFY_API_BASE_URL } from "./auth"; // Gestion des tokens
+import { getAccessToken, getValidAccessToken, SPOTIFY_API_BASE_URL } from "./auth"; // Gestion des tokens
 import "bootstrap/dist/css/bootstrap.min.css"; // Ajout de Bootstrap
-
 
 const SpotifyPlayer = () => {
     const [accessToken, setAccessToken] = useState(null);
@@ -39,6 +38,14 @@ const SpotifyPlayer = () => {
 
         return () => clearInterval(interval);
     }, [isPlaying, duration]);
+
+    // 🔹 Rafraîchir la musique lorsque terminée
+    useEffect(() => {
+        if (progress >= duration && isPlaying) {
+            console.log("⏭️ Chanson terminée, chargement de la suivante...");
+            getCurrentPlayingTrack(); // Rafraîchir la musique suivante
+        }
+    }, [progress, duration, isPlaying]);
 
     // 🔹 Récupération et gestion du token
     const fetchAccessToken = async () => {
@@ -141,11 +148,11 @@ const SpotifyPlayer = () => {
 
     return (
         <div className="container d-flex justify-content-center mt-4">
-            <div className="card bg-dark text-white text-center p-3" style={{ width: "300px", borderRadius: "10px" }}>
+            <div className="card bg-dark text-white text-center p-3 w-100">
                 {currentTrack ? (
                     <>
                         {/* Image de l'album */}
-                        <img src={currentTrack.albumArt} alt="Cover" className="card-img-top mx-auto d-block" style={{ width: "100%", borderRadius: "8px" }} />
+                        <img src={currentTrack.albumArt} alt="Cover" className="card-img-top mx-auto d-block rounded w-75" />
 
                         {/* Infos musique */}
                         <div className="card-body">
@@ -157,18 +164,18 @@ const SpotifyPlayer = () => {
                                 <span className="text-muted">{formatTime(progress)}</span>
                                 <span className="text-muted">{formatTime(duration)}</span>
                             </div>
-                            <div className="progress" style={{ height: "4px" }}>
+                            <div className="progress">
                                 <div className="progress-bar bg-success" role="progressbar"
                                     style={{ width: `${(progress / duration) * 100}%` }} />
                             </div>
 
                             {/* Boutons de contrôle */}
-                            <div className="d-flex justify-content-center mt-3">
-                                <button className="btn btn-outline-light mx-2" onClick={previousTrack}>⏮️</button>
-                                <button className="btn btn-light mx-2" onClick={togglePlayPause}>
+                            <div className="d-flex justify-content-center mt-3 gap-2">
+                                <button className="btn btn-outline-light" onClick={previousTrack}>⏮️</button>
+                                <button className="btn btn-light" onClick={togglePlayPause}>
                                     {isPlaying ? "⏸️" : "▶️"}
                                 </button>
-                                <button className="btn btn-outline-light mx-2" onClick={nextTrack}>⏭️</button>
+                                <button className="btn btn-outline-light" onClick={nextTrack}>⏭️</button>
                             </div>
                         </div>
                     </>

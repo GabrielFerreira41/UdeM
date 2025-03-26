@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getValidAccessToken, TOKEN_MISTRALAI, SPOTIFY_API_BASE_URL } from './auth';
+import ReactMarkdown from 'react-markdown';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './Analytics.css';
 
@@ -17,17 +18,28 @@ function Analytics() {
   const [mostListenedGenre, setMostListenedGenre] = useState("");
   const [mostListenedArtist, setMostListenedArtist] = useState("");
   const [recommendedTracks, setRecommendedTracks] = useState([]);
+  const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
     const fetchToken = async () => {
       const token = await getValidAccessToken();
       if (token) {
         setAccessToken(token);
-        fetchSpotifyData(token);
+      } else {
+        console.warn("⚠️ Impossible d'obtenir un token valide.");
       }
     };
+    setHasFetched(false);
     fetchToken();
   }, []);
+
+
+  useEffect(() => {
+    if (accessToken && !hasFetched) {
+      setHasFetched(true);
+      fetchSpotifyData(accessToken);
+    }
+  }, [accessToken, hasFetched]);
 
   const fetchSpotifyData = async (token) => {
     try {
@@ -107,16 +119,21 @@ function Analytics() {
             },
             {
               role: "user",
-              content: `Voici la liste des morceaux et leurs artistes :\n\n${JSON.stringify(tracksInfo)}\n\n
-                        Analyse ces morceaux et donne une réponse détaillée sous une forme naturelle et fluide, adaptée à un site web.
-                        - Décris le genre musical dominant et pourquoi il ressort.
-                        - Mentionne les artistes les plus écoutés et pourquoi.
-                        - Détecte des tendances musicales intéressantes.
-                        - Propose une recommandation musicale basée sur ces habitudes.
-                        Réponds sous forme d'un texte fluide et engageant, sans format JSON.`
+              content: `Voici la liste des morceaux et leurs artistes :
+
+              ${JSON.stringify(tracksInfo)}
+
+              Analyse ces morceaux et rédige un **texte clair et structuré** en utilisant **le format Markdown**.
+
+              ### Structure attendue :
+              - **Genre dominant** : décris le ou les genres musicaux principaux, et explique pourquoi ils ressortent.
+              - **Artistes les plus présents** : liste-les et explique pourquoi ils dominent.
+              - **Tendances musicales** : identifie des schémas ou préférences dans les morceaux.
+
+              Formule ta réponse comme si tu écrivais pour un site web musical moderne. Évite le style robotique, rends ça fluide, chaleureux, et engageant.`
             }
           ],
-          max_tokens: 300
+          max_tokens: 10000
         })
       });
 
@@ -229,12 +246,10 @@ function Analytics() {
 
       const mistralData = await mistralResponse.json();
       let trackNames = [];
-      console.log("📩 )))))))))Réponse brute de Mistral AI :", mistralData);
       trackNames = mistralData.choices[0].message.content
         .split("\n")
         .map(track => track.trim())
         .filter(track => track.length > 0);
-      console.log('fffffffffff', trackNames)
 
       // 🔹 Recherche des 5 musiques sur Spotify
       const searchedTracks = [];
@@ -242,18 +257,17 @@ function Analytics() {
         const token = await getValidAccessToken();
         console.log("New ToKEN ", token)
         if (token) {
-          console.log("New Token SETTTTTTTTTTTTTTTTTTTT")
           setAccessToken(token);
         }
       }
       for (const track of trackNames) {
         const trackData = await searchSpotifyTrack(track);
-        console.log(`🎧 -------------Musique trouvée sur Spotify :`, trackData);
+        console.log(`🎧 Musique trouvée sur Spotify :`, trackData);
         if (trackData) {
           searchedTracks.push(trackData);
         }
       }
-      console.log("🎵++++++++++ Recommandations mises à jour :", searchedTracks);
+      console.log("🎵Recommandations mises à jour :", searchedTracks);
 
       // 🔥 Mettre à jour l'état avec les 5 musiques finales
       setRecommendedTracks(searchedTracks);
@@ -299,13 +313,13 @@ function Analytics() {
       </div>
 
       <div className="row mt-4">
-        <div className="row mt-4">
-          <div className="col-md-12">
-            <div className="card bg-dark text-white p-4">
-              <h4 className="text-warning text-center">🎵 Analyse musicale par Mistral AI</h4>
-              <p className="fs-5 text-light">
+        <div className="col-md-12">
+          <div className="card bg-dark text-white p-4">
+            <h4 className="text-warning text-center">🎵 Analyse musicale par Mistral AI</h4>
+            <div className="fs-5 text-light markdown-body">
+              <ReactMarkdown>
                 {mistralAnalysis || "Analyse en attente..."}
-              </p>
+              </ReactMarkdown>
             </div>
           </div>
         </div>

@@ -12,10 +12,10 @@ function Header() {
     return (
         <nav className="navbar navbar-expand-lg" style={{ background: "linear-gradient(to bottom, #121212, #181818)" }}>
             <Link to="/" className="navbar-brand" style={{ color: "#FFFFFF" }}>
-                <img src="./spotifyLogo.png" 
+                <img src="/SpotifyLogo.png" 
                      alt="Spotify Logo" 
                      height="40"
-                     className="me-2"/>
+                     className="me-2 img-fluid"/>
                 Spotif'AI
             </Link>
             

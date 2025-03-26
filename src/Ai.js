@@ -8,8 +8,19 @@ function AI() {
     const [playlist, setPlaylist] = useState([]);
     const [accessToken, setAccessToken] = useState(null);
     const [playlistURL, setPlaylistURL] = useState(null);
+    const [playlistSize, setPlaylistSize] = useState(10);
+    const [userResponses, setUserResponses] = useState({
+        mood: "",
+        genre: "",
+        situation: "",
+        favoriteArtists: "",
+        favoriteTrack: "",
+        discoveryPreference: ""
+    });
     const navigate = useNavigate();
     const location = useLocation();
+    const [currentTrack, setCurrentTrack] = useState(null);
+    const [recommendations, setRecommendations] = useState([]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -70,9 +81,13 @@ function AI() {
                     'Authorization': `Bearer ${TOKEN_MISTRALAI}`
                 },
                 body: JSON.stringify({
-                    model: "mistral-medium",
-                    messages: [{ role: "user", content: `Génère une liste de chansons pour: ${userPrompt}` }],
-                    max_tokens: 100
+                    model: "open-codestral-mamba",
+                    messages: [{ role: "user", content: `Génère une liste de ${playlistSize} musique qui correspondent au théme : ${userPrompt} , sous ce format :
+                            1. Titre : Nom de la chanson - Artiste : Nom Artiste
+                            2. Titre : Nom de la chanson - Artiste : Nom Artiste
+                            3. Titre : Nom de la chanson - Artiste : Nom Artiste
+                            ...etc.`  }],
+                    max_tokens: 100000
                 })
             });
 
@@ -90,20 +105,40 @@ function AI() {
     };
 
     const searchSpotifyTrack = async (trackName) => {
-        if (!accessToken || !trackName) return null;
+    if (!accessToken || !trackName) return null;
 
-        try {
-            const response = await fetch(`${SPOTIFY_API_BASE_URL}/search?q=${encodeURIComponent(trackName)}&type=track&limit=1`, {
-                headers: { "Authorization": `Bearer ${accessToken}` }
-            });
+    try {
+        console.log(`🔍 Recherche originale pour "${trackName}"`);
 
-            const data = await response.json();
-            return data.tracks.items.length > 0 ? data.tracks.items[0].uri : null;
-        } catch (error) {
-            console.error(`❌ Erreur lors de la recherche du titre "${trackName}"`, error);
+        // Extraction du titre et de l'artiste avec gestion des guillemets
+        const regex = /\d+\.\s*(?:Titre|Title)\s*:\s*"?(.+?)"?\s*-\s*(?:Artiste|Artistes|Artist|Artists)\s*:\s*"?(.+?)"?/;        
+        const match = trackName.match(regex);
+        console.log(trackName)
+        if (!match) {
+            console.warn(`⚠️ Format inattendu pour "${trackName}".`);
             return null;
         }
-    };
+
+        const title = match[1].trim();
+        const artist = match[2].trim();
+
+        // Encodage de la requête pour Spotify
+        const query = encodeURIComponent(`track:${title} artist:${artist}`);
+        const url = `${SPOTIFY_API_BASE_URL}/search?q=${query}&type=track&limit=1`;
+
+        console.log(`🌐 URL Spotify Search : ${url}`);
+
+        const response = await fetch(url, {
+            headers: { "Authorization": `Bearer ${accessToken}` }
+        });
+
+        const data = await response.json();
+        return data.tracks.items.length > 0 ? data.tracks.items[0].uri : null;
+    } catch (error) {
+        console.error(`❌ Erreur lors de la recherche du titre "${trackName}"`, error);
+        return null;
+    }
+};
 
     const createSpotifyPlaylist = async (tracks, theme) => {
         if (!accessToken) {
@@ -145,10 +180,13 @@ function AI() {
             console.log("✅ Playlist Spotify créée avec succès:", playlistData);
 
             const trackURIs = [];
+            let count = 0;
             for (const track of tracks) {
+                if (count >= playlistSize) break;
                 const trackURI = await searchSpotifyTrack(track);
                 if (trackURI) {
                     trackURIs.push(trackURI);
+                    count++;
                 }
             }
 
@@ -173,10 +211,7 @@ function AI() {
 
 
     // deuxiéme fonctionnalité ########
-    // 🆕 Nouvelle section pour recommander des musiques similaires à la musique en cours d'écoute
-
-    const [currentTrack, setCurrentTrack] = useState(null);
-    const [recommendations, setRecommendations] = useState([]);
+    
 
     // 🔹 Récupérer la musique en cours d'écoute
     const getCurrentPlayingTrack = async () => {
@@ -231,16 +266,25 @@ function AI() {
                     model: "mistral-medium",
                     messages: [{
                         role: "user",
-                        content: `Propose-moi 5 morceaux similaires à "${currentTrack.title}" de ${currentTrack.artist}. sous forme de liste sans aucune phrases`
+                        content: `
+                        
+                        Génère une liste de 10 chansons qui correspondent à "${currentTrack.title}" de ${currentTrack.artist}, sous ce format :
+                            1. Titre : Nom de la chanson - Artiste : Nom Artiste
+                            2. Titre : Nom de la chanson - Artiste : Nom Artiste
+                            3. Titre : Nom de la chanson - Artiste : Nom Artiste
+                            ...etc.` 
                     }],
-                    max_tokens: 150
+                    max_tokens: 10000
                 })
             });
 
             const data = await response.json();
             const rawTracks = data.choices[0]?.message?.content.split('\n') || [];
-            const tracks = rawTracks.map(track => track.trim()).filter(track => track.length > 0);
+            const regex = /\d+\.\s*(?:Titre|Title)\s*:\s*"?(.+?)"?\s*-\s*(?:Artiste|Artistes|Artist|Artists)\s*:\s*"?(.+?)"?/;
 
+            const tracks = rawTracks
+                .map(track => track.trim())
+                .filter(track => regex.test(track)); // ✅ Ne garde que les lignes qui matchent le regex
             console.log("✅ Recommandations obtenues :", tracks);
             setRecommendations(tracks);
         } catch (error) {
@@ -278,23 +322,88 @@ function AI() {
             console.error("❌ Erreur lors de l'ajout des recommandations à la file d'attente :", error);
         }
     };
+const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUserResponses(prev => ({ ...prev, [name]: value }));
+};
 
+const generatePersonalizedPlaylist = async () => {
+    if (!accessToken) {
+        console.warn("⚠️ Veuillez vous connecter à Spotify.");
+        return;
+    }
+
+    try {
+        console.log("🔍 Envoi des préférences à Mistral AI...");
+        const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TOKEN_MISTRALAI}`
+            },
+            body: JSON.stringify({
+                model: "mistral-medium",
+                messages: [
+                    { role: "system", content: "Tu es un expert en musique. En fonction des préférences de l'utilisateur, propose une liste de 10 morceaux adaptés." },
+                    { role: "user", content: `L'utilisateur a répondu :
+                    - Humeur : ${userResponses.mood}
+                    - Genre préféré : ${userResponses.genre}
+                    - Situation : ${userResponses.situation}
+                    - Artistes favoris : ${userResponses.favoriteArtists}
+                    - Chanson favorite : ${userResponses.favoriteTrack}
+                    - Découverte : ${userResponses.discoveryPreference}
+
+                    Génère une liste de 10 chansons qui correspondent à ces goûts, sous ce format :
+                    1. Titre : Nom de la chanson - Artiste : Nom Artiste
+                    2. Titre : Nom de la chanson - Artiste : Nom Artiste
+                    3. Titre : Nom de la chanson - Artiste : Nom Artiste
+                    ...etc.` }
+                ],
+                max_tokens: 10000
+            })
+        });
+
+        const data = await response.json();
+        const rawTracks = data.choices[0]?.message?.content.split('\n') || [];
+        const tracks = rawTracks.map(track => track.trim()).filter(track => track.length > 0);
+
+        console.log("✅ Playlist recommandée par Mistral AI:", tracks);
+
+        setPlaylist(tracks);
+        await createSpotifyPlaylist(tracks, "Playlist Personnalisée");
+    } catch (error) {
+        console.error("❌ Erreur lors de la génération de la playlist avec Mistral AI:", error);
+    }
+};
     return (
         <div className="container-fluid min-vh-100 bg-dark" >
             <div className="container py-4">
-                <h2 className="text-center text-spotify-green" style={{ color: "#FFFFFF" }}>🤖 AI Music Generator (Mistral AI)</h2>
+                <h2 className="text-center text-spotify-green" style={{ color: "#FFFFFF" }}>🤖 AI Playlist Generator (Mistral AI)</h2>
                 <p className="text-center" style={{ color: "#FFFFFF" }}>Entrez un thème et laissez Mistral AI générer une playlist Spotify 🎶</p>
 
-                <div className="d-flex justify-content-center">
-                    <input
-                        type="text"
-                        className="form-control w-50"
-                        placeholder="Ex: Soirée Chill, Workout, Années 80..."
-                        value={userPrompt}
-                        onChange={(e) => setUserPrompt(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && generatePlaylist()}
-                    />
-                    <button className="btn btn-outline-success ms-2 text-spotify-green" onClick={generatePlaylist}>Générer 🎵</button>
+                <div className="d-flex justify-content-center flex-column align-items-center">
+                    <div className="w-50">
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Ex: Soirée Chill, Workout, Années 80..."
+                            value={userPrompt}
+                            onChange={(e) => setUserPrompt(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && generatePlaylist()}
+                        />
+                    </div>
+                    <div className="mt-3 text-white w-50">
+                        <label className="form-label">🎚️ Nombre de morceaux à ajouter à la playlist : {playlistSize}</label>
+                        <input 
+                            type="range" 
+                            className="form-range" 
+                            min="1" 
+                            max="50" 
+                            value={playlistSize} 
+                            onChange={(e) => setPlaylistSize(parseInt(e.target.value, 10))} 
+                        />
+                    </div>
+                    <button className="btn btn-outline-success mt-3 text-spotify-green" onClick={generatePlaylist}>Générer 🎵</button>
                 </div>
 
                 {playlistURL && (
@@ -344,6 +453,61 @@ function AI() {
                         </div>
                     )}
                 </div>
+                <h2 className="text-center text-spotify-green" style={{ color: "#FFFFFF" }}>🤖 Playlist Personaliser (Mistral AI)</h2>
+                <div className="mt-4">
+                    <form className="text-white">
+                        <label className="form-label">1. Quelle est ton humeur ?</label>
+                        <select className="form-select mb-3" name="mood" onChange={handleChange}>
+                            <option>Choisir...</option>
+                            <option>Positif</option>
+                            <option>Détendu</option>
+                            <option>Énergique</option>
+                            <option>Mélancolique</option>
+                            <option>Triste</option>
+                        </select>
+
+                        <label className="form-label">2. Quel est ton genre musical préféré ?</label>
+                        <select className="form-select mb-3" name="genre" onChange={handleChange}>
+                            <option>Choisir...</option>
+                            <option>Rock</option>
+                            <option>Hip-hop</option>
+                            <option>Électro</option>
+                            <option>Classique</option>
+                            <option>Pop</option>
+                        </select>
+
+                        <label className="form-label">3. Quelle est ta situation actuelle ?</label>
+                        <input type="text" className="form-control mb-3" name="situation" placeholder="Ex: En train de travailler, en fête, etc." onChange={handleChange} />
+
+                        <label className="form-label">4. Quels sont tes artistes favoris ?</label>
+                        <input type="text" className="form-control mb-3" name="favoriteArtists" placeholder="Ex: Artiste 1, Artiste 2" onChange={handleChange} />
+
+                        <label className="form-label">5. Quelle est ta chanson favorite ?</label>
+                        <input type="text" className="form-control mb-3" name="favoriteTrack" placeholder="Ex: Nom de la chanson" onChange={handleChange} />
+
+                        <label className="form-label">6. Préférence de découverte musicale ?</label>
+                        <select className="form-select mb-3" name="discoveryPreference" onChange={handleChange}>
+                            <option>Choisir...</option>
+                            <option>Découvertes récentes</option>
+                            <option>Classiques intemporels</option>
+                            <option>Indépendants</option>
+                        </select>
+                        
+
+                        <button type="button" className="btn btn-outline-light w-100 mt-3" onClick={generatePersonalizedPlaylist}>
+                            🎵 Générer ma Playlist
+                        </button>
+                    </form>
+
+                    {playlistURL && (
+                        <div className="text-center mt-4">
+                            <a href={playlistURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-success">
+                                🎵 Voir la playlist sur Spotify
+                            </a>
+                        </div>
+                    )}
+                </div>
+
             </div>
         </div>
     );
