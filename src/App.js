@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
-import Accueil from './Accueil';
-import Ai from './Ai';
-import Analytics from './Analytics';
+import Accueil from './templates/Accueil';
+import Ai from './templates/Ai';
+import Analytics from './templates/Analytics';
 
 function App() {
     return (

@@ -6,9 +6,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 import './index.css';
 import App from './App';
-import Header from './Header';
-import SpotifyPlayer from './SpotifyPlayer';
-import QueueDisplay from './QueueDisplay'; // 🔹 Ajout de l'import
+import Header from './templates/Header';
+import SpotifyPlayer from './templates/SpotifyPlayer';
+import QueueDisplay from './templates/QueueDisplay'; // 🔹 Ajout de l'import
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
