@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import Accueil from './templates/Accueil';
 import Ai from './templates/Ai';
 import Analytics from './templates/Analytics';
+import MyAi  from './templates/MyAi';
 
 function App() {
     return (
@@ -10,6 +11,7 @@ function App() {
                 <Route path="/" element={<Accueil />} />
                 <Route path="/ai" element={<Ai />} />
                 <Route path="/analytics" element={<Analytics />} />
+                <Route path="/my-ai" element={<MyAi />} />
             </Routes>
         </div>
     );
