@@ -104,21 +104,32 @@ const QueueDisplay = () => {
     };
 
     return (
-    <div className="mt-3 h-50 overflow-auto">
+        <div className="mt-4" style={{ maxHeight: "40vh", overflowY: "auto" }}>
+            <h5 className="text-center text-white mb-3">🎶 À suivre</h5>
             {loading ? (
                 <p className="text-center text-muted">Chargement...</p>
             ) : (
-                <ul className="list-group">
+                <div className="d-flex flex-column gap-2">
                     {queue.length > 0 ? (
                         queue.map((track, index) => (
-                            <li key={index} className="list-group-item bg-dark text-white">
-                                {track.name} - {track.artists.map(artist => artist.name).join(", ")}
-                            </li>
+                            <div
+                                key={index}
+                                className="d-flex align-items-center bg-dark text-white p-2 rounded shadow-sm"
+                                style={{ transition: "0.2s", cursor: "pointer" }}
+                            >
+                                <div className="flex-grow-1">
+                                    <div className="fw-bold">{track.name}</div>
+                                    <div className="text-muted small">
+                                        {track.artists.map(artist => artist.name).join(", ")}
+                                    </div>
+                                </div>
+                                <span className="badge bg-success ms-2">{index + 1}</span>
+                            </div>
                         ))
                     ) : (
-                        <li className="list-group-item bg-dark text-white text-center">Aucune musique à suivre</li>
+                        <p className="text-center text-white">Aucune musique à suivre</p>
                     )}
-                </ul>
+                </div>
             )}
         </div>
     );

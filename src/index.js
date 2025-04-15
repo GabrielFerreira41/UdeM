@@ -26,7 +26,6 @@ root.render(
           
           {/* 🔹 File d'attente sous le player */}
           <div className="mt-3 p-2 bg-secondary rounded">
-            <h5 className="text-center">🎶 À suivre</h5>
             <QueueDisplay />
           </div>
         </div>
