@@ -1,0 +1,17 @@
+
+# IFT 6285 DEVOIR 1
+
+Description fichiers de code
+
+## exo1_exo2_Regex.py 
+Ce fichier contient le code permettant de tokéniser le dataset de wikipedia ainsi que l'affichage avec matplotlib de l'évolution entre le nombre de mots lu et le nombre de mots différent.
+
+    fonctionnement du code :
+        2 variables importante : 
+        - MODE -> 3 mode disponible :
+            - base : tokénisation avec regex pour les espaces
+            - base 1 : tokénisation base + texte en miniscule est chiffre en caractére spécial @
+            - base 2 : base + base1 + ajout de regex pour modifié les lien http,mail,user,hastag en balise <EMAIL><URL><USER><HASHTAG>
+        - RUN_DISPLAY :
+            - TRUE : Pour afficher le graphique d'évolution du nombre de mot différent en fonction du nombre de mot lu.
+            - FALSE : Ne pas afficher le graphique uniquement les éléments de l'exercice 1
