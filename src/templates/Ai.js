@@ -16,8 +16,10 @@ function AI() {
     const [userPrompt, setUserPrompt] = useState('');
     const [playlist, setPlaylist] = useState([]);
     const [accessToken, setAccessToken] = useState(null);
-    const [playlistURL, setPlaylistURL] = useState(null);
+    const [promptPlaylistURL, setPromptPlaylistURL] = useState(null);
+    const [personalizedPlaylistURL, setPersonalizedPlaylistURL] = useState(null);
     const [playlistSize, setPlaylistSize] = useState(10);
+    const [loading, setLoading] = useState(false);
     const [userResponses, setUserResponses] = useState({
         mood: "",
         genre: "",
@@ -30,6 +32,8 @@ function AI() {
     const location = useLocation();
     const [currentTrack, setCurrentTrack] = useState(null);
     const [recommendations, setRecommendations] = useState([]);
+    const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+    const [loadingPersonalized, setLoadingPersonalized] = useState(false);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -81,6 +85,7 @@ function AI() {
             return;
         }
 
+        setLoading(true);
         try {
             console.log("🔍 Génération de la playlist via Mistral AI...");
             const messages = [{
@@ -92,15 +97,17 @@ function AI() {
               ...etc.`
             }];
 
-            const tracks = await callMistral(messages, "open-codestral-mamba");
+            const tracks = await callMistral(messages);
 
             console.log("✅ Playlist générée par Mistral AI:", tracks);
 
             setPlaylist(tracks);
             const url = await createSpotifyPlaylist(tracks, userPrompt, accessToken, playlistSize);
-            if (url) setPlaylistURL(url);
+            if (url) setPromptPlaylistURL(url);
         } catch (error) {
             console.error("❌ Erreur lors de la génération de la playlist avec Mistral AI:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -118,6 +125,7 @@ function AI() {
             return;
         }
 
+        setLoadingRecommendations(true);
         try {
             console.log(`🔍 Demande de recommandations pour "${currentTrack.title}"`);
 
@@ -139,6 +147,8 @@ function AI() {
             setRecommendations(validTracks);
         } catch (error) {
             console.error("❌ Erreur lors de la récupération des recommandations :", error);
+        } finally {
+            setLoadingRecommendations(false);
         }
     };
 
@@ -165,6 +175,7 @@ function AI() {
             return;
         }
 
+        setLoadingPersonalized(true);
         try {
             console.log("🔍 Envoi des préférences à Mistral AI...");
             const messages = [
@@ -192,9 +203,11 @@ function AI() {
 
             setPlaylist(tracks);
             const url = await createSpotifyPlaylist(tracks, "Playlist Personnalisée", accessToken, playlistSize);
-            if (url) setPlaylistURL(url);
+            if (url) setPersonalizedPlaylistURL(url);
         } catch (error) {
             console.error("❌ Erreur lors de la génération de la playlist avec Mistral AI:", error);
+        } finally {
+            setLoadingPersonalized(false);
         }
     };
     return (
@@ -225,12 +238,21 @@ function AI() {
                             onChange={(e) => setPlaylistSize(parseInt(e.target.value, 10))}
                         />
                     </div>
+                {loading ? (
+                    <div className="mt-3 text-white">
+                        <div className="spinner-border text-success" role="status">
+                            <span className="visually-hidden">Chargement...</span>
+                        </div>
+                        <p className="mt-2">Génération en cours...</p>
+                    </div>
+                ) : (
                     <button className="btn btn-outline-success mt-3 text-spotify-green" onClick={generatePlaylist}>Générer 🎵</button>
+                )}
                 </div>
 
-                {playlistURL && (
+                {promptPlaylistURL && (
                     <div className="text-center mt-4">
-                        <a href={playlistURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-success text-spotify-green">
+                        <a href={promptPlaylistURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-success text-spotify-green">
                             🎵 Voir la playlist sur Spotify
                         </a>
                     </div>
@@ -250,9 +272,18 @@ function AI() {
 
                     {currentTrack && (
                         <div className="text-center">
-                            <button className="btn btn-outline-success me-2 text-spotify-green" onClick={getRecommendationsFromMistral}>
-                                🔍 Obtenir des recommandations
-                            </button>
+                            {loadingRecommendations ? (
+                                <div className="text-white mt-3">
+                                    <div className="spinner-border text-success" role="status">
+                                        <span className="visually-hidden">Chargement...</span>
+                                    </div>
+                                    <p className="mt-2">Chargement des recommandations...</p>
+                                </div>
+                            ) : (
+                                <button className="btn btn-outline-success me-2 text-spotify-green" onClick={getRecommendationsFromMistral}>
+                                    🔍 Obtenir des recommandations
+                                </button>
+                            )}
                         </div>
                     )}
 
@@ -316,14 +347,23 @@ function AI() {
                         </select>
 
 
-                        <button type="button" className="btn btn-outline-light w-100 mt-3" onClick={generatePersonalizedPlaylist}>
-                            🎵 Générer ma Playlist
-                        </button>
+                        {loadingPersonalized ? (
+                            <div className="text-center text-white mt-3">
+                                <div className="spinner-border text-light" role="status">
+                                    <span className="visually-hidden">Chargement...</span>
+                                </div>
+                                <p className="mt-2">Génération de la playlist personnalisée...</p>
+                            </div>
+                        ) : (
+                            <button type="button" className="btn btn-outline-light w-100 mt-3" onClick={generatePersonalizedPlaylist}>
+                                🎵 Générer ma Playlist
+                            </button>
+                        )}
                     </form>
 
-                    {playlistURL && (
+                    {personalizedPlaylistURL && (
                         <div className="text-center mt-4">
-                            <a href={playlistURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-success">
+                            <a href={personalizedPlaylistURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-success">
                                 🎵 Voir la playlist sur Spotify
                             </a>
                         </div>
